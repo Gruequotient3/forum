@@ -1,0 +1,61 @@
+#!/usr/bin/python3
+
+import sys
+import os
+import sqlite3 as sql
+import hashlib
+
+db = sql.connect("base.sqlite3")
+interface = db.cursor()
+interface.execute(r"""CREATE TABLE IF NOT EXISTS "login" (username TEXT, password INTEGER)""");
+interface.execute(r"""CREATE TABLE IF NOT EXISTS "forum" (id INTEGER PRIMARY KEY, name TEXT)""");
+interface.execute(r"""CREATE TABLE IF NOT EXISTS "message" (id INTEGER PRIMARY KEY, author TEXT, timestamp INTEGER, message TEXT)""");
+interface.execute(r"""CREATE TABLE IF NOT EXISTS "log" (idforum INTEGER, idmessage INTEGER)""");
+interface.execute(r"""CREATE TABLE IF NOT EXISTS "answer" (idmessage INTEGER, idanswer INTEGER)""");
+
+db.commit()
+
+login = interface.execute("""SELECT username, password FROM login""")
+login = login.fetchall()
+
+contents = ""
+length = 0
+if "CONTENT_LENGTH" in os.environ:
+    length = int(os.environ.get("CONTENT_LENGTH"))
+contents += sys.stdin.read(length)
+contents = contents.split("&")
+
+args: dict = {}
+for content in contents:
+    (name, value) = content.split("=")
+    args.setdefault(name, value)
+
+username = args.get("username")
+password = args.get("password")
+
+cookies = ""
+redirectUrl = "../../signup.html"
+if (username and password and not (username, hashlib.sha1(password.encode()).hexdigest()) in login):
+    interface.execute("INSERT INTO login(username, password) VALUES(?, ?)",
+        (username, hashlib.sha1(password.encode()).hexdigest()))
+    db.commit()
+    redirectUrl = "../../login.html"
+db.close()
+
+page = """Content-type:text/html
+{cookies}
+Location: {url}
+
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="utf-8" http-equiv="refresh" content="0;url={url}">
+        <title>Redirection</title>
+    </head>
+    <body>
+        <p>Redirection ... <a href="{url}">Cliquer ici si vous n'êtes pas rediriger</a>
+    </body>
+</html>
+""".format(cookies=cookies, url=redirectUrl)
+
+sys.stdout.write(page)

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="utf-8">
+        <title>Log in</title>
+        <link rel="stylesheet" href="css/style.css">
+    </head>
+    <body>
+        <div class="main-container">
+            <div class="navbar">
+                <ul class="nav" id="nav">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="signup.html">Sign up</a></li>
+                    <li><a href="login.html" class="active">Log in</a></li>
+                </ul>
+            </div>
+            <form action="cgi-bin/login" method=POST>
+                <label>Identifiant</label>
+                <input type="text" name="username" maxlength="16" required></input>
+                <label>Mot de passe</label>
+                <input type="password" name="password" required></input>
+                <input type="submit" value="Se Connecter"></input>
+            </form>
+        </div>
+    </body>
+</html>

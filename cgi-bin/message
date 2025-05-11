@@ -1,0 +1,121 @@
+#!/usr/bin/python3
+
+import sys
+import os
+import sqlite3 as sql
+import json
+import html
+
+def get_cookie(key : str):
+    if "HTTP_COOKIE" in os.environ:
+        cookies = os.environ.get("HTTP_COOKIE")
+        if (cookies == ""):
+            return None
+        cookies = cookies.split("; ")
+        for cookie in cookies:
+            (name, value) = cookie.split("=")
+            if (key.lower() == name.lower()):
+                return value
+    return None
+
+def get_arg(key : str):
+    if "QUERY_STRING" in os.environ:
+        args = os.environ.get("QUERY_STRING")
+        args = args.split("&")
+        for arg in args:
+            (name, value) = arg.split("=")
+            if (key.lower() == name.lower()):
+                return value
+    return None
+
+headers = "HTTP/1.1 200 OK\nContent-Type:application/json\nAccess-Control-Allow-Origin:*\n\n"
+
+db = sql.connect("base.sqlite3")
+interface = db.cursor()
+interface.execute(r"""CREATE TABLE IF NOT EXISTS "login" (username TEXT, password INTEGER)""");
+interface.execute(r"""CREATE TABLE IF NOT EXISTS "forum" (id INTEGER PRIMARY KEY, name TEXT)""");
+interface.execute(r"""CREATE TABLE IF NOT EXISTS "message" (id INTEGER PRIMARY KEY, author TEXT, timestamp INTEGER, message TEXT)""");
+interface.execute(r"""CREATE TABLE IF NOT EXISTS "log" (idforum INTEGER, idmessage INTEGER)""");
+interface.execute(r"""CREATE TABLE IF NOT EXISTS "answer" (idmessage INTEGER, idanswer INTEGER)""");
+
+db.commit()
+
+forum_id = get_arg("forum")
+
+method = "GET"
+if "REQUEST_METHOD" in os.environ:
+    method = os.environ.get("REQUEST_METHOD")
+
+if (method == "GET"):
+
+    if forum_id == None:
+        sys.stdout.write(json.dumps({"status": "error",
+                                    "message": "No forum selected"}))
+    else:
+        interface.execute("SELECT id, author, timestamp, message FROM message, log WHERE message.id = log.idmessage and log.idforum = ?;", (forum_id,))
+        messages = interface.fetchall()
+        messages_json = []
+        keys = ["id", "author", "timestamp", "message"]
+        for message in messages:
+            # Escape html balise from message
+            mess = list(message)
+            mess[3] = html.escape(mess[3])
+            message = tuple(mess)
+            
+            messages_json.append(dict(zip(keys, message)))
+        sys.stdout.write(headers)
+        sys.stdout.write(json.dumps(messages_json))
+
+else:
+    content = ""
+    length = 0
+    if "CONTENT_LENGTH" in os.environ:
+        length = int(os.environ.get("CONTENT_LENGTH"))
+    content += sys.stdin.read(length)
+    content_json = json.loads(content)
+
+    user = get_cookie("LOGIN")
+    password = get_cookie("PWD")
+
+    timestamp = content_json.get("timestamp")
+    message = content_json.get("message")
+    
+    if user == None or password == None:
+        sys.stdout.write(headers)
+        sys.stdout.write(json.dumps({"status": "need-auth",
+                                    "message": "Client not logged in"}))
+
+    elif (forum_id == None):
+        sys.stdout.write(headers)
+        sys.stdout.write(json.dumps({"status": "error",
+                                    "message": "No forum selected"}))
+
+    elif timestamp != None and message:
+        interface.execute("SELECT id FROM forum WHERE id = ?;", (forum_id,))
+        forum = interface.fetchall();
+        if (forum == None):
+            sys.stdout.write(headers)
+            sys.stdout.write(json.dumps({"status": "error",
+                                        "message": ("No forum with id=" + str(forum_id))}))
+        else:
+            interface.execute("INSERT INTO message (author, timestamp, message) VALUES(?, ?, ?);", (user, timestamp, message))
+            interface.execute("SELECT id from message ORDER BY timestamp DESC;")
+            message_id = interface.fetchone()
+            if message_id != None:
+                interface.execute("INSERT INTO log (idforum, idmessage) VALUES(?, ?);", (forum_id, message_id[0]))
+                db.commit()
+
+                sys.stdout.write(headers)
+                sys.stdout.write(json.dumps({"status": "ok"}))
+            else:
+                sys.stdout.write(headers)
+                sys.stdout.write(json.dumps({"status": "error",
+                                             "message": "Cannot insert element into database"}))
+    else:
+        sys.stdout.write(headers)
+        sys.stdout.write(json.dumps({"status": "error",
+                            "message": "Default"}))
+db.close()
+
+
+
