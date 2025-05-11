@@ -14,13 +14,15 @@
                     <li><a href="login.html">Log in</a></li>
                 </ul>
             </div>
-            <form action="cgi-bin/signup" method=POST>
-                <label>Identifiant</label>
-                <input type="text" name="username" maxlength="16" pattern="[a-zA-Z0-9]{4,16}" required></input>
-                <label>Mot de passe</label>
-                <input type="password" name="password" pattern="[a-zA-Z0-9*=+-.:,?!<>'$]{4,128}" required></input>
-                <input type="submit" value="S'inscrire"></input>
-            </form>
+            <div class="main-content">
+                <form action="cgi-bin/signup" method=POST>
+                    <label>Identifiant</label>
+                    <input type="text" name="username" maxlength="16" pattern="[a-zA-Z0-9]{4,16}" required></input>
+                    <label>Mot de passe</label>
+                    <input type="password" name="password" pattern="[a-zA-Z0-9*=+-.:,?!<>'$]{4,128}" required></input>
+                    <input type="submit" value="S'inscrire"></input>
+                </form>
+            </div>
         </div>
     </body>
 </html>
