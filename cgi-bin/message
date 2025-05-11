@@ -5,6 +5,7 @@ import os
 import sqlite3 as sql
 import json
 import html
+import hashlib
 
 from function import *
 
@@ -55,7 +56,15 @@ else:
     timestamp = content_json.get("timestamp")
     message = content_json.get("message")
     
-    if user == None or password == None:
+    loggedin = False
+    if user and password:
+        interface.execute("SELECT username, password FROM login")
+        login = interface.fetchall()
+        if (user, hashlib.sha1(password.encode()).hexdigest()) in login:
+            loggedin = True
+                          
+
+    if user == None or password == None or loggedin == False:
         sys.stdout.write(headers)
         sys.stdout.write(json.dumps({"status": "need-auth",
                                     "message": "Client not logged in"}))
