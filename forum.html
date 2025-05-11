@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="utf-8">
+        <title>Suggest Forum</title>
+        <link rel="stylesheet" href="css/style.css">
+    </head>
+    <body>
+        <div class="main-container">
+            <div class="navbar">
+                <ul class="nav" id="nav">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="#" class="active">Forum</a></li>
+                    <li><a href="signup.html">Sign up</a></li>
+                    <li><a href="login.html">Log in</a></li>
+                </ul>
+            </div>
+            <div class="main-content">
+                <h2>Suggérer un nouveau forum</h2>
+                <form action="cgi-bin/createforum" method=POST>
+                    <label>Nom du forum</label>
+                    <input type="text" name="forum_name" maxlength="16" pattern="([a-zA-Z0-9]|-){4,16}" required></input>
+                    <input type="submit" value="Proposer"></input>
+                </form>
+            </div>
+        </div>
+    </body>
+</html>

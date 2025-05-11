@@ -1,0 +1,36 @@
+#!/usr/bin/python3
+
+import sys
+import sqlite3 as sql
+import html
+
+from function import *
+
+db = sql.connect("base.sqlite3")
+interface = db.cursor()
+interface.execute(r"""CREATE TABLE IF NOT EXISTS "login" (username TEXT, password INTEGER)""");
+interface.execute(r"""CREATE TABLE IF NOT EXISTS "forum" (id INTEGER PRIMARY KEY, name TEXT)""");
+interface.execute(r"""CREATE TABLE IF NOT EXISTS "message" (id INTEGER PRIMARY KEY, author TEXT, timestamp INTEGER, message TEXT)""");
+interface.execute(r"""CREATE TABLE IF NOT EXISTS "log" (idforum INTEGER, idmessage INTEGER)""");
+interface.execute(r"""CREATE TABLE IF NOT EXISTS "answer" (idmessage INTEGER, idanswer INTEGER)""");
+
+db.commit()
+
+headers = "HTTP/1.1 200 OK\nContent-Type:application/json\nAccess-Control-Allow-Origin:*\n\n"
+
+content_json = load_post_args_json()
+forum_substr = content_json.get("search")
+if forum_substr == None:
+    forum_substr = ""
+forum_substr = "'%" + forum_substr + "%'"
+
+forum_list = interface.execute("SELECT * FROM forum WHERE name LIKE {substr}".format(substr=forum_substr))
+forum_list = forum_list.fetchall();
+forum_json = []
+keys = ["id", "name"]
+for forum in forum_list:           
+    forum_json.append(dict(zip(keys, forum)))
+
+sys.stdout.write(headers)
+sys.stdout.write(json.dumps(forum_json[0:4]))
+    

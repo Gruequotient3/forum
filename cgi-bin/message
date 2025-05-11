@@ -6,27 +6,7 @@ import sqlite3 as sql
 import json
 import html
 
-def get_cookie(key : str):
-    if "HTTP_COOKIE" in os.environ:
-        cookies = os.environ.get("HTTP_COOKIE")
-        if (cookies == ""):
-            return None
-        cookies = cookies.split("; ")
-        for cookie in cookies:
-            (name, value) = cookie.split("=")
-            if (key.lower() == name.lower()):
-                return value
-    return None
-
-def get_arg(key : str):
-    if "QUERY_STRING" in os.environ:
-        args = os.environ.get("QUERY_STRING")
-        args = args.split("&")
-        for arg in args:
-            (name, value) = arg.split("=")
-            if (key.lower() == name.lower()):
-                return value
-    return None
+from function import *
 
 headers = "HTTP/1.1 200 OK\nContent-Type:application/json\nAccess-Control-Allow-Origin:*\n\n"
 
@@ -67,12 +47,7 @@ if (method == "GET"):
         sys.stdout.write(json.dumps(messages_json))
 
 else:
-    content = ""
-    length = 0
-    if "CONTENT_LENGTH" in os.environ:
-        length = int(os.environ.get("CONTENT_LENGTH"))
-    content += sys.stdin.read(length)
-    content_json = json.loads(content)
+    content_json = load_post_args_json()
 
     user = get_cookie("LOGIN")
     password = get_cookie("PWD")
@@ -93,7 +68,8 @@ else:
     elif timestamp != None and message:
         interface.execute("SELECT id FROM forum WHERE id = ?;", (forum_id,))
         forum = interface.fetchall();
-        if (forum == None):
+        sys.stderr.write(str(forum) + "\n")
+        if (forum == None or forum == []):
             sys.stdout.write(headers)
             sys.stdout.write(json.dumps({"status": "error",
                                         "message": ("No forum with id=" + str(forum_id))}))

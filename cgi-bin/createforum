@@ -1,9 +1,7 @@
 #!/usr/bin/python3
 
 import sys
-import os
 import sqlite3 as sql
-import hashlib
 
 from function import *
 
@@ -17,25 +15,31 @@ interface.execute(r"""CREATE TABLE IF NOT EXISTS "answer" (idmessage INTEGER, id
 
 db.commit()
 
-login = interface.execute("""SELECT username, password FROM login""")
-login = login.fetchall()
-db.close()
+headers = "HTTP/1.1 200 OK\nContent-Type:application/json\nAccess-Control-Allow-Origin:*\n\n"
+
+forum_list = interface.execute("""SELECT name FROM forum""")
+forum_list = forum_list.fetchall()
+sys.stderr.write(str(forum_list) + "\n")
+
+username = get_cookie("LOGIN")
+password = get_cookie("PWD")
 
 args = load_post_args()
-username = args.get("username")
-password = args.get("password")
+forum_name = args.get("forum_name")
 
 cookies = ""
-redirectUrl = "../../login.html"
-if (username and password and (username, hashlib.sha1(password.encode()).hexdigest()) in login):
-    cookies += "Set-Cookie: LOGIN={username}\n".format(username=username)
-    cookies += "Set-Cookie: PWD={password}\n".format(password=password)
+redirectUrl = "../../forum.html"
+if username == None or password == None:
+    redirectUrl = "../../login.html"
+
+elif (username and password and not (forum_name, ) in forum_list):
+    interface.execute("INSERT INTO forum (name) VALUES(?)", (forum_name,))
+    db.commit()
     redirectUrl = "../../index.html"
+db.close()
 
 page = """Content-type:text/html
 {cookies}
-Access-Control-Allow-Origin:*
-Access-Control-Allow-Credentials: true
 Location: {url}
 
 <!DOCTYPE html>

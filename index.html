@@ -12,13 +12,12 @@
                     <li><a href="#" class="active">Home</a></li>
                     <li>
                         <div class="search-menu">
-                            <input type="search"></input>
+                            <input type="search" id="search" onkeydown="fetchForum(this)"></input>
                             <div class="search">
-                                <ul class="search-list">
-                                    <li><button onclick="setForum(1)">Forum 1</button></li>
+                                <ul class="search-list" id="search-list">
                                 </ul>
                             </div>
-                            <p>Forums</p>
+                            <a href="forum.html">Forum</a>
                         </div>
                     </li>
                     <li><a href="signup.html">Sign up</a></li>
@@ -27,14 +26,14 @@
             </div>
 
             <div class="main-content">
-                <h2>Forum name</h2>
+                <h2 id="forum-name">Aucun forum selectionné</h2>
                 <div class="message-box" id="msg-log">
                     <ul id="msg-out">
                     </ul>
                 </div>
                 <div class="message-input">
-                    <input class="input" id="msg-in" type="text" ></input>
-                    <input type="button" onclick="sendMessage()" value="Send">
+                    <input type="text" id="msg-in"></input>
+                    <input type="button" onclick="sendMessage()" value="Send"></input>
                 </div>
             </div>
         </div>

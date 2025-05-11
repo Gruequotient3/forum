@@ -1,9 +1,10 @@
 #!/usr/bin/python3
 
 import sys
-import os
 import sqlite3 as sql
 import hashlib
+
+from function import *
 
 db = sql.connect("base.sqlite3")
 interface = db.cursor()
@@ -15,27 +16,17 @@ interface.execute(r"""CREATE TABLE IF NOT EXISTS "answer" (idmessage INTEGER, id
 
 db.commit()
 
-login = interface.execute("""SELECT username, password FROM login""")
+login = interface.execute("""SELECT username FROM login""")
 login = login.fetchall()
 
-contents = ""
-length = 0
-if "CONTENT_LENGTH" in os.environ:
-    length = int(os.environ.get("CONTENT_LENGTH"))
-contents += sys.stdin.read(length)
-contents = contents.split("&")
 
-args: dict = {}
-for content in contents:
-    (name, value) = content.split("=")
-    args.setdefault(name, value)
-
+args = load_post_args()
 username = args.get("username")
 password = args.get("password")
 
 cookies = ""
 redirectUrl = "../../signup.html"
-if (username and password and not (username, hashlib.sha1(password.encode()).hexdigest()) in login):
+if (username and password and not (username,) in login):
     interface.execute("INSERT INTO login(username, password) VALUES(?, ?)",
         (username, hashlib.sha1(password.encode()).hexdigest()))
     db.commit()

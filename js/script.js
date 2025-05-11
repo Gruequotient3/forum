@@ -1,8 +1,9 @@
 const server = "http://127.0.0.1:12345/";
-let idforum = 1;
+let idforum = 0;
 
 setInterval(fetchMessage, 5000);
 fetchMessage();
+fetchForum(document.getElementById("search"));
 
 async function fetchMessage(){
     const answer = await fetch(server+"cgi-bin/message?forum="+idforum, {
@@ -73,7 +74,7 @@ async function sendMessage(){
             logdiv.scrollTop = logdiv.scrollHeight;
             break;
         case "need-auth":
-            window.location.href = "signup.html";
+            window.location.href = "login.html";
             break;
         case "error":
             console.log(log.message);
@@ -81,6 +82,31 @@ async function sendMessage(){
         default:
             console.log("default")
             break;
+    }
+}
+
+async function fetchForum(el){
+    const search = el.value;
+
+    const answer = await fetch(server+"cgi-bin/forum", {
+        method:"POST",
+        body: JSON.stringify({search})
+    });
+    const forum = await answer.json()
+    
+    const listNode = document.getElementById("search-list");
+    clearChildren(listNode);
+    if (forum){
+        forum.forEach(element => {
+            const forumItem = document.createElement("li")
+            const forumButton = document.createElement("button");
+            
+            forumButton.setAttribute("onClick", "setForum("+element.id + ",\"" + element.name + "\");");
+            forumButton.textContent = element.name;
+            
+            forumItem.appendChild(forumButton);
+            listNode.appendChild(forumItem);
+        });
     }
 }
 
@@ -92,7 +118,9 @@ function clearChildren(node){
     }
 }
 
-function setForum(id){
+function setForum(id, name){
+    const forumTitle = document.getElementById("forum-name");
+    forumTitle.textContent = name;
     idforum = id;
     fetchMessage();
 }
